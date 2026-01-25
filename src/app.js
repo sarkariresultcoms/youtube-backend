@@ -20,4 +20,9 @@ app.use(express.urlencoded({
 app.use(express.static("public"));
 app.use(cookieParser());
 
+//routes middleware will be here
+import userRoutes from "./routes/users.routes.js";
+app.use("/api/v1/users", userRoutes);
+
+
 export { app };

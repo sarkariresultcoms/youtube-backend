@@ -19,10 +19,10 @@ const asyncHandler = (fn) => async(req, res, next) => {
 
 // A higher-order function to handle async errors in Express routes
 
-const ayncHandler = (requestHandler) => {
-  async (req, res, next) => {
+const asyncHandler = (requestHandler) => {
+  return (req, res, next) => {
   Promise.resolve(requestHandler(req, res, next)).
   catch((err)=>next(err));
  }
 }
-export {ayncHandler};
+export { asyncHandler };
