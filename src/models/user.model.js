@@ -59,7 +59,7 @@ userSchema.methods.comparePassword = async function(password) {
 };
 
 userSchema.methods.generateAcessToken = function() {
-        jwt.sign(
+       return jwt.sign(
         { 
             _id: this._id, 
             username: this.username ,
@@ -73,7 +73,7 @@ userSchema.methods.generateAcessToken = function() {
 }
 userSchema.methods.generateRefreshToken = function() {
     
-    jwt.sign(
+    return jwt.sign(
         { _id: this._id},
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }

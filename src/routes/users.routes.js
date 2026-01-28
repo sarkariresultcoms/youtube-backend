@@ -26,9 +26,9 @@ router.route("/register").post
     );
 router.route("/login").post(loginUser);
 router.route("/logout").post(VerifyJWT, logoutUser);
-router.route("/Update-profile").put(VerifyJWT, updateUserProfile);
-router.route("/Update-profile-photo").put(VerifyJWT, upload.single("avatar"), updateAvatar);
-router.route("/Update-profile-coverImage").put(VerifyJWT, upload.single("coverImage"), updatecoverImage);
+router.route("/update-profile").put(VerifyJWT, updateUserProfile);
+router.route("/update-profile-photo").put(VerifyJWT, upload.single("avatar"), updateAvatar);
+router.route("/update-profile-coverImage").put(VerifyJWT, upload.single("coverImage"), updatecoverImage);
 router.route("/profile").get(VerifyJWT, getUserProfile);
 router.route("/change-password").put(VerifyJWT, changeUserPassword);
 router.route("/refresh-token").get(refreshAcessToken);
