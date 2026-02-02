@@ -132,9 +132,15 @@ const deleteVideo = asyncHandler(async (req, res) => {
     //TODO: delete video
     const video = await Video.findById(videoId);
     if (!video) {
-        throw new Error("Video not found");
+        throw new ApiError(404, "Video not found");
     }
-    await video.remove();
+    const RemovedVideo = await video.remove();
+    if (RemovedVideo) {
+        const isDeleted = await deleteVideoFromCloudinary(video.videoFile);
+        if (!isDeleted) {
+            throw new ApiError(500, "Failed to delete video from cloudinary");
+        }
+    }
     return res.status(200).json({
         status: 200,
         message: "Video deleted successfully"
