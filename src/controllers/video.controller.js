@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler"
 import Video from "../models/video.model.js"
 import { uploadToCloudinary } from "../utils/cloudinary.js"
 import { ApiError } from "../utils/ApiError.js"
+import mongoose from "mongoose"
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
@@ -14,23 +15,26 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const videoFile = req.files?.video?.[0];
     const thumbnailFile = req.files?.thumbnail?.[0];    
     
-    if (!videoFile) {
-        throw new Error("Video file is required");
-    }
-    if (!thumbnailFile) {
-        throw new Error("Thumbnail file is required");  
+    if(!title.trim() || !description.trim() || !videoFile)
+    {
+        throw new ApiError(400, !title.trim()?"Title required": !description.trim()?"Description Required": "Video file is required" );
     }
    
     const videoUploadResult = await uploadToCloudinary(videoFile.path);
 
     if (!videoUploadResult || !videoUploadResult.url) {
-        throw new Error("Video upload failed");
+        throw new ApiError(400,"Video upload failed");
     }
 
-    const thumbnailUploadResult = await uploadToCloudinary(thumbnailFile.path); 
-    if (!thumbnailUploadResult || !thumbnailUploadResult.url) {
-        throw new Error("Thumbnail upload failed");
+    if (thumbnailFile) {
+        const thumbnailUploadResult = await uploadToCloudinary(thumbnailFile.path); 
+        if (!thumbnailUploadResult || !thumbnailUploadResult.url) {
+            throw new ApiError(400,"Thumbnail upload failed");
+    }  
+    }else{
+        thumbnailFile="";
     }
+   
 
     const video = await Video.create({
         title,
@@ -56,13 +60,43 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: get video by id
-    const video = await Video.findById(videoId);
-    if (!video) {
-        throw new Error("Video not found");
+    const video= await Video.aggregate([
+        {
+            $match:{ _id: new mongoose.Types.ObjectId(videoId)}
+        },
+        {
+            $lookup: {
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline :[
+                    {
+                        $project:{
+                            fullName: 1,
+                            username: 1,
+                            avatar: 1 
+                        }
+                    }
+                ]
+
+
+            }
+        },
+       {
+       $addFields: {
+        owner: { $first: "$owner" }
+    }
+  }
+        
+    ]);
+
+    if (video.length==0) {
+        throw new ApiError(400, "Video not found");
     }
     return res.status(200).json({
         status: 200,
-        data: video,
+        data: video[0],
         message: "Video fetched successfully"
     });
 })
@@ -117,12 +151,12 @@ const updateVideo = asyncHandler(async (req, res) => {
         }
     ]);
 
-    if (!video) {
+    if (video.length==0) {
         throw new Error("Failed to update video");
     }
     return res.status(200).json({
         status: 200,
-        data: video,
+        data: video[0],
         message: "Video updated successfully"
     });
 })

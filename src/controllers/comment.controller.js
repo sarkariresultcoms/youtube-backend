@@ -9,18 +9,62 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     const {page = 1, limit = 10} = req.query
 
+
 })
 
 const addComment = asyncHandler(async (req, res) => {
     // TODO: add a comment to a video
+     const {videoId} = req.params
+     const {userId} = req.user._id
+     const {comment} =req.body
+
+     const commentAdd= await Comment.create(
+        {
+         content:comment,
+         video:videoId,
+         owner:userId
+        }
+     );
+
+     if(!commentAdd)
+     {
+        throw new ApiError(500, "Failed to create comment");
+     }
+
+    const AddedComment= await Comment.findById(commentAdd._id);
+
+    return res.status(201).json(new ApiResponse(201, AddedComment, "Comment successfully"));
+
+
+     
 })
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
+    const {commentId} = req.params
+    const {comment} =req.body
+
+    const commentUpdate=  await Comment.findByIdAndUpdate(commentId, { content: comment }, { new: true }).select();
+    
+    if(!commentUpdate)
+        throw new ApiError(500, "Failed to Update comment");
+
+    return res.status(201).json(new ApiResponse(201, commentUpdate, "Comment updated successfully"));
+
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
     // TODO: delete a comment
+
+    const {commentId} = req.params
+    const commentDeleted=  await Comment.deleteOne(commentId);
+    
+    if(!commentDeleted)
+    {
+            throw new ApiError(500, "Failed to delete comment");
+    }
+
+    return res.status(201).json(new ApiResponse(201, null, "Comment deleted successfully"));
 })
 
 export {

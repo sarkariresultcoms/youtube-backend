@@ -67,26 +67,28 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                     from:"users",
                     localField: "channel",
                     foreignField: "_id",
-                    as: "subscriber"
+                    as: "subscriber",
+                    pipeline: [
+                        {
+                            $project:{
+                                fullName:1,
+                                username:1,
+                                avatar:1
+                            } 
+                        }
+                    ]
                 }
             },
             {
-                $unwind: "$subscriber"
-            },
-            {
-                $project:{
-                    channel:"$subscriber._id",
-                    fullName: "$subscriber.fullName",
-                    username: "$subscriber.username",
-                    email: "$subscriber.email",
-                    avatar: "$subscriber.avatar",
-                    coverImage: "$subscriber.coverImage",
+                $addFields:{
+                   "subscriber" :{ $first: "subscriber"}
                 }
-            }
+            },
+            
         ]
     )
 
-    if(!subscriberList || subscriberList.length==0)
+    if(subscriberList.length==0)
     {
         return res.status(200).json(new ApiResponse(
             200,
@@ -97,7 +99,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     
     return res.status(200).json(new ApiResponse(
     200,
-    subscriberList,
+    subscriberList[0],
     "Subscriber List Successfully fetched"
     ))
     
@@ -111,7 +113,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         [
             {
                 $match:{
-                    subscriber: subscriberId
+                    subscriber: new mongoose.Types.ObjectId(subscriberId)
                 }
             },
             {
@@ -119,22 +121,24 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                     from:"users",
                     localField: "subscriber",
                     foreignField: "_id",
-                    as: "channel"
+                    as: "channel",
+                    pipeline: [
+                        {
+                            $project:{
+                                fullName:1,
+                                username:1,
+                                avatar:1
+                            } 
+                        }
+                    ]
                 }
             },
             {
-                $unwind: "$channel"
-            },
-            {
-                $project:{
-                    channel:"$channel._id",
-                    fullName: "$channel.fullName",
-                    username: "$channel.username",
-                    email: "$channel.email",
-                    avatar: "$channel.avatar",
-                    coverImage: "$channel.coverImage",
+                $addFields: {
+                "channel" : {$first: "channel"}
                 }
-            }
+            },
+           
         ]
     )
 
@@ -149,7 +153,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            ChannelList,
+            ChannelList[0],
             "Channel List Successfully Fetched"
 
         )
